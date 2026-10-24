@@ -113,7 +113,7 @@ await writeFile(
       <section class="area" aria-labelledby="worlds-title">
         <h2 class="area__title" id="worlds-title">未来の世界</h2>
         <p class="area__lead">技術をかけあわせた先にある世界と、その時代の人がかかえていそうな悩みです。妄想は、ここから始めるのがおすすめです。</p>
-        ${worldList("worlds/")}
+        ${worldList("worlds/", 2)}
         <p class="back"><a href="worlds/">未来の世界をすべて見る</a></p>
       </section>
       <h2 class="section-label">未来の技術</h2>
@@ -151,20 +151,31 @@ for (const f of futures) {
 const SITE = `${PORTAL}mirai/`;
 const SEEDS = `${PORTAL}seeds/`;
 const NEW_SEED = "https://github.com/mousou-lp/mousou-lp.github.io/discussions/new";
-function worldList(base) {
-  return `<ul class="futures" role="list">${worlds
+// 世界を時代ごとにまとめて並べる。limit を渡すと、時代ごとに先頭からその数だけ出す
+function worldList(base, limit = Infinity) {
+  return ERAS.map((era) => ({ era, items: worlds.filter((w) => w.era === era) }))
+    .filter((g) => g.items.length)
     .map(
-      (w) => `
-          <li class="future">
-            <a class="future__link" href="${base}${w.slug}/">
-              <h3 class="future__title">${esc(w.title)}</h3>
-            </a>
-            <p class="future__summary">${esc(w.summary)}</p>
-            <p class="future__when">${esc(w.year)}</p>
-          </li>`,
+      (g) => `
+        <section class="world-era">
+          <h3 class="world-era__title">${esc(g.era)}<span class="world-era__count">${g.items.length}件</span></h3>
+          <ul class="futures" role="list">${g.items
+            .slice(0, limit)
+            .map(
+              (w) => `
+            <li class="future">
+              <a class="future__link" href="${base}${w.slug}/">
+                <h4 class="future__title">${esc(w.title)}</h4>
+              </a>
+              <p class="future__summary">${esc(w.summary)}</p>
+              <p class="future__when">${esc(w.year)}</p>
+            </li>`,
+            )
+            .join("")}
+          </ul>
+        </section>`,
     )
-    .join("")}
-        </ul>`;
+    .join("");
 }
 await mkdir("dist/worlds", { recursive: true });
 await writeFile(
@@ -185,7 +196,7 @@ await writeFile(
 );
 for (const w of worlds) {
   const seed = `${NEW_SEED}?${new URLSearchParams({ category: "ideas", title: "アイデアの種: ", era: w.era, world: `${SITE}worlds/${w.slug}/` })}`;
-  const techLinks = w.techs.map((t) => futures.find((f) => f.slug === t)).map((f) => `<a href="../../${f.slug}/">${esc(f.title)}</a>`).join("、");
+  const techLinks = w.techs.map((t) => futures.find((f) => f.slug === t)).map((f) => `「<a href="../../${f.slug}/">${esc(f.title)}</a>」`).join("");
   await mkdir(`dist/worlds/${w.slug}`, { recursive: true });
   await writeFile(
     `dist/worlds/${w.slug}/index.html`,

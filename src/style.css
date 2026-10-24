@@ -338,3 +338,22 @@ a:focus-visible {
 .site-nav {
   flex-wrap: wrap;
 }
+
+.world-era {
+  margin-top: var(--space-8);
+}
+
+.world-era__title {
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.world-era__count {
+  margin-left: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
