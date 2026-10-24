@@ -153,6 +153,7 @@ function page({ title, root, description, main }) {
       <a href="${PORTAL}">妄想LP</a>
       <a href="${root || "./"}" aria-current="${root ? "false" : "page"}">未来のこと</a>
       <a href="${PORTAL}tane/">妄想のタネ</a>
+      <a href="${PORTAL}seeds/">アイデアの種</a>
     </nav>
     <main class="container">${main}
     </main>
