@@ -1,4 +1,4 @@
-// futures/*.md を読んで、未来のことの一覧と、1件ずつのページを dist に書き出す。依存なし（Node 20 以上）
+// futures/*.md と worlds/*.md を読んで、未来のことと未来の世界の一覧と、1件ずつのページを dist に書き出す。依存なし（Node 20 以上）
 // 使い方: node build.mjs（中身を確かめるだけなら node build.mjs --check）
 import { readFile, writeFile, mkdir, cp, rm, readdir } from "node:fs/promises";
 
@@ -22,12 +22,31 @@ for (const file of files) {
   for (const s of SECTIONS) if (!body.includes(`## ${s}`)) errors.push(`${file}: 「## ${s}」の見出しがありません`);
   futures.push({ slug, ...meta, body });
 }
+// 未来の世界（方向性）。技術をかけあわせた先の世界と、その時代の人の悩みをためておく
+const WORLD_REQUIRED = ["title", "year", "era", "techs", "summary"];
+const WORLD_SECTIONS = ["何が変わったか", "未来の言葉", "その時代の人", "その時代の渋滞"];
+const ERAS = ["2030年代", "2040年代", "2050年代", "2060年代", "2070年ごろ", "2100年ごろ", "2200年ごろ", "もっと先"];
+const worlds = [];
+for (const file of (await readdir("worlds")).filter((f) => f.endsWith(".md")).sort()) {
+  const slug = file.replace(/\.md$/, "");
+  const { meta, body } = parseFrontMatter(await readFile(`worlds/${file}`, "utf8"));
+  const where = `worlds/${file}`;
+  for (const key of WORLD_REQUIRED) if (!meta[key]) errors.push(`${where}: ${key} がありません`);
+  if (!/^[a-z0-9-]+$/.test(slug)) errors.push(`${where}: ファイル名は英小文字・数字・ハイフンだけにしてください`);
+  if (meta.era && !ERAS.includes(meta.era)) errors.push(`${where}: era は ${ERAS.join("・")} のどれかにしてください`);
+  if (meta.summary && [...meta.summary].length > 80) errors.push(`${where}: summary は 80 字までにしてください`);
+  const techs = (meta.techs ?? "").split(",").map((t) => t.trim()).filter(Boolean);
+  for (const t of techs) if (!futures.some((f) => f.slug === t)) errors.push(`${where}: techs の ${t} が futures/ にありません`);
+  for (const sec of WORLD_SECTIONS) if (!body.includes(`## ${sec}`)) errors.push(`${where}: 「## ${sec}」の見出しがありません`);
+  worlds.push({ slug, ...meta, techs, body });
+}
+worlds.sort((a, b) => Number(a.year.match(/\d+/)?.[0]) - Number(b.year.match(/\d+/)?.[0]));
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exit(1);
 }
 if (checkOnly) {
-  console.log(`futures: ${futures.length} 件、問題なし`);
+  console.log(`futures: ${futures.length} 件、worlds: ${worlds.length} 件、問題なし`);
   process.exit(0);
 }
 
@@ -39,6 +58,7 @@ function eraOf(when) {
   if (year < 2040) return "2030年代";
   if (year < 2050) return "2040年代";
   if (year < 2060) return "2050年代";
+  if (year < 2070) return "2060年代";
   if (year < 2086) return "2070年ごろ";
   if (year < 2151) return "2100年ごろ";
   if (year < 2301) return "2200年ごろ";
@@ -90,6 +110,13 @@ await writeFile(
         <p class="page-lead">妄想のもとにする、未来の技術とくらしのまとめです。気になる未来を1つ選んで、自分の偏愛とかけあわせてみてください。</p>
         <p class="page-note">どれも予想で、確かなことではありません。まとめている未来：${futures.length}件</p>
       </header>
+      <section class="area" aria-labelledby="worlds-title">
+        <h2 class="area__title" id="worlds-title">未来の世界</h2>
+        <p class="area__lead">技術をかけあわせた先にある世界と、その時代の人がかかえていそうな悩みです。妄想は、ここから始めるのがおすすめです。</p>
+        ${worldList("worlds/")}
+        <p class="back"><a href="worlds/">未来の世界をすべて見る</a></p>
+      </section>
+      <h2 class="section-label">未来の技術</h2>
       ${groups}`,
   }),
 );
@@ -121,6 +148,74 @@ for (const f of futures) {
     }),
   );
 }
+const SITE = `${PORTAL}mirai/`;
+const SEEDS = `${PORTAL}seeds/`;
+const NEW_SEED = "https://github.com/mousou-lp/mousou-lp.github.io/discussions/new";
+function worldList(base) {
+  return `<ul class="futures" role="list">${worlds
+    .map(
+      (w) => `
+          <li class="future">
+            <a class="future__link" href="${base}${w.slug}/">
+              <h3 class="future__title">${esc(w.title)}</h3>
+            </a>
+            <p class="future__summary">${esc(w.summary)}</p>
+            <p class="future__when">${esc(w.year)}</p>
+          </li>`,
+    )
+    .join("")}
+        </ul>`;
+}
+await mkdir("dist/worlds", { recursive: true });
+await writeFile(
+  "dist/worlds/index.html",
+  page({
+    title: "未来の世界 | 未来のこと | 妄想LP",
+    root: "../",
+    description: "技術をかけあわせた先にある世界と、その時代の人の悩みをためておく場所です。",
+    main: `
+      <p class="back"><a href="../">未来のことの一覧</a></p>
+      <header class="page-header">
+        <h1 class="page-title">未来の世界</h1>
+        <p class="page-lead">技術をかけあわせた先にある世界と、その時代の人がかかえていそうな悩みをためておく場所です。いまの人の悩みではなく、その時代の人の悩みからサービスを考えます。</p>
+        <p class="page-note">ためている世界：${worlds.length}件。考え方は<a href="${REPO}/blob/main/THINKING.md">THINKING.md</a>にあります。</p>
+      </header>
+      ${worldList("")}`,
+  }),
+);
+for (const w of worlds) {
+  const seed = `${NEW_SEED}?${new URLSearchParams({ category: "ideas", title: "アイデアの種: ", era: w.era, world: `${SITE}worlds/${w.slug}/` })}`;
+  const techLinks = w.techs.map((t) => futures.find((f) => f.slug === t)).map((f) => `<a href="../../${f.slug}/">${esc(f.title)}</a>`).join("、");
+  await mkdir(`dist/worlds/${w.slug}`, { recursive: true });
+  await writeFile(
+    `dist/worlds/${w.slug}/index.html`,
+    page({
+      title: `${w.title} | 未来の世界 | 妄想LP`,
+      root: "../../",
+      description: w.summary,
+      main: `
+      <p class="back"><a href="../">未来の世界の一覧</a></p>
+      <article class="article">
+        <p class="article__meta">${esc(w.year)}・未来の世界</p>
+        <h1 class="page-title">${esc(w.title)}</h1>
+        <p class="page-lead">${esc(w.summary)}</p>
+        <p class="article__techs">かけあわせた技術：${techLinks}</p>
+        ${markdown(w.body)}
+      </article>
+      <aside class="next" aria-labelledby="next-title">
+        <h2 class="next__title" id="next-title">この世界で妄想する</h2>
+        <p>この時代の人の悩みを1つ選んで、それを1行の約束でひっくり返すサービスを考えます。だれが、どう払うかまで書けると、LPにしやすくなります。</p>
+        <p class="next__actions">
+          <a class="button" href="${seed}">この世界で種をまく${ICON}</a>
+          <a href="${SEEDS}?world=${w.slug}">この世界の種を見る</a>
+        </p>
+      </aside>`,
+    }),
+  );
+}
+// アイデアの種のページが、世界の名前と時代を出すのに読む
+await writeFile("dist/worlds.json", JSON.stringify(worlds.map((w) => ({ slug: w.slug, title: w.title, year: w.year, era: w.era, summary: w.summary })), null, 2));
+
 // 妄想のタネ（mousou-lp.github.io/tane/）が読むデータ
 const seedsOf = (body) => {
   const part = body.split("## 妄想のタネ")[1] ?? "";
@@ -134,7 +229,7 @@ await writeFile(
     2,
   ),
 );
-console.log(`dist: ${futures.length} 件の未来を書き出しました`);
+console.log(`dist: ${futures.length} 件の未来と ${worlds.length} 件の世界を書き出しました`);
 
 function page({ title, root, description, main }) {
   return `<!doctype html>
