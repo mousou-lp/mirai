@@ -98,7 +98,7 @@ for (const f of futures) {
       </article>
       <aside class="next" aria-labelledby="next-title">
         <h2 class="next__title" id="next-title">この未来で妄想する</h2>
-        <p>自分の偏愛とかけあわせると、どんなサービスができそうですか。思いついたら、LPにしてみてください。自分で作らなくても、リクエストに書いておけば、だれかが作るかもしれません。</p>
+        <p>自分の偏愛とかけあわせると、どんなサービスができそうですか。思いついたら、LPにしてみてください。自分で作らなくても、リクエストに書いておけば、だれかが作るかもしれません。思いつかないときは、<a href="${PORTAL}tane/">妄想のタネ</a>で問いを出してみてください。</p>
         <p class="next__actions">
           <a class="button" href="${REQUEST}">LPのリクエストを書く${ICON}</a>
           <a href="https://github.com/mousou-lp/lp-template">自分でLPを作る</a>
@@ -138,6 +138,7 @@ function page({ title, root, description, main }) {
     <nav class="site-nav container" aria-label="妄想LP">
       <a href="${PORTAL}">妄想LP</a>
       <a href="${root || "./"}" aria-current="${root ? "false" : "page"}">未来のこと</a>
+      <a href="${PORTAL}tane/">妄想のタネ</a>
     </nav>
     <main class="container">${main}
     </main>
