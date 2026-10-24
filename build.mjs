@@ -107,6 +107,19 @@ for (const f of futures) {
     }),
   );
 }
+// 妄想のタネ（mousou-lp.github.io/tane/）が読むデータ
+const seedsOf = (body) => {
+  const part = body.split("## 妄想のタネ")[1] ?? "";
+  return part.split("\n").filter((l) => /^-\s+/.test(l)).map((l) => l.replace(/^-\s+/, "").trim());
+};
+await writeFile(
+  "dist/futures.json",
+  JSON.stringify(
+    futures.map((f) => ({ slug: f.slug, title: f.title, when: f.when, area: f.area, summary: f.summary, seeds: seedsOf(f.body) })),
+    null,
+    2,
+  ),
+);
 console.log(`dist: ${futures.length} 件の未来を書き出しました`);
 
 function page({ title, root, description, main }) {

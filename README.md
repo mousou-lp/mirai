@@ -47,6 +47,7 @@ node build.mjs && python3 -m http.server 5181 -d dist
 ## しくみ
 
 - `build.mjs`が`futures/*.md`を読み、一覧と1件ずつのページを`dist/`に書き出します。ほかに入れるものはなく、Node 20以上があれば動きます
+- 同じ中身を`futures.json`としても出しています。[妄想のタネ](https://github.com/mousou-lp/tane)が、これを読んで未来の選択肢にしています。項目の名前を変えるときは、妄想のタネも合わせて直します
 - 見た目は`src/style.css`です。色・余白・文字の大きさは、ポータルと同じ値を使っています
 - 公開は`.github/workflows/pages.yml`が、GitHub Pagesに出します。お金はかかりません
 - 検索エンジンには載りません。ポータルの`robots.txt`が、`/mirai/`もまとめて止めています
