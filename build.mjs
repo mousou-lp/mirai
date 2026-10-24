@@ -33,7 +33,21 @@ if (checkOnly) {
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-// 分野ごとにまとめる。分野の並びは、はじめて出てきた順
+// when から、ポータルの年表と同じ時代の区切りに入れる。ポータルの build.mjs の ERAS と同じ並び
+function eraOf(when) {
+  const year = Number(when.match(/\d{4}/)?.[0] ?? Infinity);
+  if (year < 2040) return "2030年代";
+  if (year < 2050) return "2040年代";
+  if (year < 2060) return "2050年代";
+  if (year < 2086) return "2070年ごろ";
+  if (year < 2151) return "2100年ごろ";
+  if (year < 2301) return "2200年ごろ";
+  return "もっと先";
+}
+const yearOf = (when) => Number(when.match(/\d{4}/)?.[0] ?? 99999);
+futures.sort((a, b) => yearOf(a.when) - yearOf(b.when));
+
+// 分野ごとにまとめる。分野の並びは、近い未来から順に、はじめて出てきた順
 const areas = [...new Set(futures.map((f) => f.area))];
 const groups = areas
   .map((area) => {
@@ -115,7 +129,7 @@ const seedsOf = (body) => {
 await writeFile(
   "dist/futures.json",
   JSON.stringify(
-    futures.map((f) => ({ slug: f.slug, title: f.title, when: f.when, area: f.area, summary: f.summary, seeds: seedsOf(f.body) })),
+    futures.map((f) => ({ slug: f.slug, title: f.title, when: f.when, era: eraOf(f.when), area: f.area, summary: f.summary, seeds: seedsOf(f.body) })),
     null,
     2,
   ),
